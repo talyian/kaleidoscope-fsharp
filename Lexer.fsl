@@ -1,0 +1,21 @@
+{
+open Parser
+open FSharp.Text.Lexing
+let lexeme  (lexbuf : LexBuffer<char>) = new System.String(lexbuf.Lexeme)
+}
+rule tokenize = parse
+  | "def"    { DEF }
+  | "extern" { EXTERN }
+  | ['a'-'z' 'A'-'Z']['a' - 'z' 'A'-'Z' '0'-'9' '_' ]* { IDENTIFIER (lexeme lexbuf) }
+  | ['0' - '9' '.']+ { NUMBER (float (lexeme lexbuf)) }
+  | '<' { BINOP (lexeme lexbuf, 10) }
+  | '+' { BINOP (lexeme lexbuf, 20) }
+  | '-' { BINOP (lexeme lexbuf, 20) }
+  | '*' { BINOP (lexeme lexbuf, 40) }
+  | '(' { LPAREN }
+  | ')' { RPAREN }
+  | ' ' { tokenize lexbuf }
+  | ',' { COMMA }
+  | ';' { SEMI }
+  | eof { EOF }
+  

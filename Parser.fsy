@@ -1,0 +1,66 @@
+%{
+// AST  
+type Expr =
+  | Call of Expr * Expr list
+  | Extern of int
+  | Def of int * Expr
+  | Number of float
+  | Variable of string
+  | Binop of (string * int) * Expr * Expr
+
+let balance_binop(op, lhs, rhs) =
+  let ops, prec = op
+  match lhs, rhs with
+    | Binop ((lops, lprec) as lop, ll, lr), rhs when lprec < prec ->
+      Binop (lop, ll, Binop(op, lr, rhs))
+    | _ -> Binop(op, lhs, rhs)
+       
+// Error Handling 
+open FSharp.Text.Parsing
+type ParseError (token, shift_tokens, reduce_tokens) =
+    inherit exn()
+    member __.Data = (token, shift_tokens, reduce_tokens)
+let f_parse_error_rich<'t> (ctx:ParseErrorContext<'t>) =
+  ignore (raise (ParseError(sprintf "%O" ctx.CurrentToken, ctx.ShiftTokens, ctx.ReduceTokens)))
+let parse_error_rich = Some f_parse_error_rich
+%}
+
+%token DEF EXTERN
+%token <string> IDENTIFIER
+%token <float> NUMBER
+%token <string * int> BINOP
+%token SEMI COMMA LPAREN RPAREN EOF
+
+%start start
+%type <unit> start
+%%
+
+start : lines SEMI { }
+lines : line { } | lines line { }
+line:
+  | DEF prototype expr { printfn "parsed a function definition" }
+  | EXTERN prototype { printfn "parsed extern" }
+  | expr { printfn "parsed top-level expression" }
+
+expr:
+  | primary { $1 }
+  | IDENTIFIER LPAREN comma_exprs RPAREN { Call(Variable $1, $3) }
+  | expr BINOP expr { balance_binop($2, $1, $3) }
+  
+primary :
+  | NUMBER { Number $1 }
+  | IDENTIFIER { Variable $1 }
+  | LPAREN expr RPAREN { $2 }
+
+comma_exprs: { [] } | comma_exprs_1 { $1 }
+comma_exprs_1:
+  | expr { [$1] }
+  | comma_exprs_1 COMMA expr { $1 @ [$3] }
+
+arguments:
+  | expr { [$1] }
+  | arguments expr { $1 @ [$2] }
+  
+prototype:
+  | IDENTIFIER LPAREN arguments RPAREN { Variable $1, $3 }
+  | IDENTIFIER LPAREN RPAREN { Variable $1, [] }
