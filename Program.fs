@@ -12,16 +12,6 @@ let parse source =
 
 [<EntryPoint>]
 let main argv =
-  // Examples from chapter 2
-  // parse "def foo(x y) x+foo(y, 4.0);"
-  // parse "def foo(x y) x+y y;"
-  // parse "def foo(x y) x+y );"
-  // parse "extern sin(a);"
-
-  // Examples from chapter 3
-  // parse "4 + 5;"
-  // parse "def foo(a b) a*a + 2*a*b + b*b;"
-  // parse "def bar(a) foo(a, 4.0) + bar(31337);"
   let rec loop s = 
     printf "kaleidoscope> "
     match System.Console.ReadLine() with

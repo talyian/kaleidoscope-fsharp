@@ -25,6 +25,7 @@ let rec codegen expr =
       | "<" ->
          let bool = builder.BuildFCmp(LLVMRealPredicate.LLVMRealULT, !lhs, !rhs)
          builder.BuildUIToFP(bool, context.DoubleType)
+      | _ -> failwithf "Invalid operator %O" op
   | Call(callee, args) -> builder.BuildCall(!callee, !! args)
   | Func(name, param, body) ->
     let func =

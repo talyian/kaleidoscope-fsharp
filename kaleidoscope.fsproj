@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <RootNamespace>kaleidoscope_fsharp</RootNamespace>
+    <NoWarn>NU1608</NoWarn> <!-- thanks FsLexYacc -->
+    <FsLexOutputFolder>obj/fslexyacc/</FsLexOutputFolder>
+    <FsYaccOutputFolder>obj/fslexyacc/</FsYaccOutputFolder>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Watch Include="**\*.fsl;**\*.fsy" />
+    <FsLex Include="Lexer.fsl" OtherFlags="--unicode --module Lexer" />
+    <FsYacc Include="Parser.fsy" OtherFlags="--module Parser" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Compile Include="$(FsYaccOutputFolder)/Parser.fs" />
+    <Compile Include="$(FsLexOutputFolder)/Lexer.fs" />
+    <Compile Include="Codegen.fs" />
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FsLexYacc" Version="9.0.2" />
+    <PackageReference Include="LlvmSharp" Version="8.0.0-beta" />
+    <PackageReference Include="libllvm.runtime.ubuntu.18.04-x64" Version="8.0.0" />
+    <PackageReference Include="libllvm.runtime.win-x64" Version="8.0.0" />
+  </ItemGroup>
+
+</Project>
