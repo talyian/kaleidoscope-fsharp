@@ -1,9 +1,9 @@
 %{
 // AST  
 type Expr =
+  | Func of string * string list * Expr
+  | Extern of string * string list
   | Call of Expr * Expr list
-  | Extern of int
-  | Def of int * Expr
   | Number of float
   | Variable of string
   | Binop of (string * int) * Expr * Expr
@@ -13,6 +13,8 @@ let balance_binop(op, lhs, rhs) =
   match lhs, rhs with
     | Binop ((lops, lprec) as lop, ll, lr), rhs when lprec < prec ->
       Binop (lop, ll, Binop(op, lr, rhs))
+    | lhs, Binop ((rops, rprec) as rop, rl, rr) when rprec < prec ->
+      Binop (rop, Binop(op, lhs, rl), rr)
     | _ -> Binop(op, lhs, rhs)
        
 // Error Handling 
@@ -32,15 +34,15 @@ let parse_error_rich = Some f_parse_error_rich
 %token SEMI COMMA LPAREN RPAREN EOF
 
 %start start
-%type <unit> start
+%type <Expr list> start
 %%
 
-start : lines SEMI { }
-lines : line { } | lines line { }
+start : lines SEMI { $1 }
+lines : line { [$1] } | lines line { $1 @ [$2] }
 line:
-  | DEF prototype expr { printfn "parsed a function definition" }
-  | EXTERN prototype { printfn "parsed extern" }
-  | expr { printfn "parsed top-level expression" }
+  | DEF prototype expr { Func (fst $2, snd $2, $3) }
+  | EXTERN prototype { Extern (fst $2, snd $2) }
+  | expr { $1 }
 
 expr:
   | primary { $1 }
@@ -58,9 +60,9 @@ comma_exprs_1:
   | comma_exprs_1 COMMA expr { $1 @ [$3] }
 
 arguments:
-  | expr { [$1] }
-  | arguments expr { $1 @ [$2] }
+  | IDENTIFIER { [$1] }
+  | arguments IDENTIFIER { $1 @ [$2] }
   
 prototype:
-  | IDENTIFIER LPAREN arguments RPAREN { Variable $1, $3 }
-  | IDENTIFIER LPAREN RPAREN { Variable $1, [] }
+  | IDENTIFIER LPAREN arguments RPAREN { $1, $3 }
+  | IDENTIFIER LPAREN RPAREN { $1, [] }
